@@ -2,7 +2,7 @@ from environment import *
 
 def main():
 
-    env = Environment("data/reduced_height_map.jpg", 31, 50, True)
+    env = Environment("data/reduced_height_map.jpg", 15, 50, True)
     no_action = 0
     counter = 0
 
@@ -12,9 +12,13 @@ def main():
     # Simulate environment for development purposes
     while (True):
         #action = input()
-        #action = random.randrange(0, 8)
+        action = random.randrange(0, 8)
 
-        env.tick(int(action))
+        action = int(action)
+
+        next_state, reward, done = env.step(action)
+
+        #env.step(int(action))
         env.render_map()
         env.render_sub_map()
 
