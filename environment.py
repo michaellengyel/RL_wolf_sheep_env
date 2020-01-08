@@ -71,7 +71,7 @@ class Environment:
                 # Generate a number in the range of the pixel at i, j
                 rand = random.randrange(0, self.map_img_agents[i, j, 0])
                 # If the generated number is 0 and pixel i, j is sub 30
-                if ((self.map_img_agents[i, j, 0] < self.food_spawn_threshold) & (rand == 0)):
+                if ((self.map_img_agents[i, j, 0] < self.food_spawn_threshold) & (rand <= 3)): # TODO Reinstate (rand == 0)
                     # Set pixel red
                     self.map_img_agents[i, j, 0] = 0
                     self.map_img_agents[i, j, 1] = 255
@@ -144,10 +144,10 @@ class Environment:
     def calculate_reward(self, x, y):
         # Logic for gaining rewards
         if ((self.map_img_agents[self.agent_x + x, self.agent_y + y, 1]) == 255):
-            self.agent_reward += 30
+            self.agent_reward += 1
             #print("Reward: ", self.agent_reward)
         else:
-            self.agent_reward -= 1
+            self.agent_reward -= 0 # TODO: Set this to -1
 
     # Calculating step's reward
     def calculate_current_reward(self, x, y):
@@ -156,10 +156,10 @@ class Environment:
         self.agent_current_reward = 0
         # If stepped on reward set current reward to 1
         if ((self.map_img_agents[self.agent_x + x, self.agent_y + y, 1]) == 255):
-            self.agent_current_reward = 30
+            self.agent_current_reward = 1 # TODO: Set this to 100
             #print("Reward: ", self.agent_current_reward)
         else:
-            self.agent_reward -= 1
+            self.agent_current_reward = 0
 
     # Update the environment based on the action
     def step(self, action):
@@ -215,7 +215,7 @@ class Environment:
 
         # Check if all rewards have been found, if yes set done to true
 
-        if(self.no_of_rewards == self.agent_reward):
+        if((self.no_of_rewards/2) <= self.agent_reward):
             self.done = True
 
         # Crop the submap from the map
