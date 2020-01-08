@@ -24,16 +24,23 @@ class Environment:
         self.agent_x = 0
         self.agent_y = 0
         self.agent_reward = 0
+        self.agent_current_reward = 0
+        # Number of rewards randomly generated
+        self.no_of_rewards = 0
+        # Is the game done
+        self.done = False
 
         # s0
         self.init_map()
         # a0
         self.init_agent_pos()
 
+
         cv2.namedWindow('MAP', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('MAP', 900, 900)
         cv2.namedWindow('SUBMAP', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('SUBMAP', 400, 400)
+
 
     ########## Environment Initialization Functions ##########
 
@@ -69,7 +76,23 @@ class Environment:
                     self.map_img_agents[i, j, 0] = 0
                     self.map_img_agents[i, j, 1] = 255
                     self.map_img_agents[i, j, 2] = 0
+                    # Increment the number of rewards counter
+                    self.no_of_rewards += 1
                 #print(self.map_img[i, j ,2])
+
+
+    ########## Reset Function ##########
+
+    def reset(self):
+        self.map_img_agents = self.load_map()
+        self.map_img_calculations = self.load_map()
+        self.init_agent_pos()
+        self.init_map()
+
+        self.sub_map_img = self.map_img_agents[self.agent_x - self.offset:self.agent_x + self.offset + 1, self.agent_y - self.offset:self.agent_y + self.offset + 1, :]
+        return self.sub_map_img
+
+    ########## Getter Function ##########
 
     ########## Debug Helper Functions ##########
 
@@ -117,57 +140,87 @@ class Environment:
         #else:
             #print("Out of bounds")
 
+    # Calculating net reward
     def calculate_reward(self, x, y):
         # Logic for gaining rewards
         if ((self.map_img_agents[self.agent_x + x, self.agent_y + y, 1]) == 255):
-            self.agent_reward += 1
-            print("Reward: ", self.agent_reward)
+            self.agent_reward += 30
+            #print("Reward: ", self.agent_reward)
+        else:
+            self.agent_reward -= 1
+
+    # Calculating step's reward
+    def calculate_current_reward(self, x, y):
+        # Logic for gaining rewards
+        # Reset current reward to 0
+        self.agent_current_reward = 0
+        # If stepped on reward set current reward to 1
+        if ((self.map_img_agents[self.agent_x + x, self.agent_y + y, 1]) == 255):
+            self.agent_current_reward = 30
+            #print("Reward: ", self.agent_current_reward)
+        else:
+            self.agent_reward -= 1
 
     # Update the environment based on the action
-    def tick(self, action):
+    def step(self, action):
 
         # UP
         if (action == 0):
             #print("UP")
             self.calculate_reward(0, -1)
+            self.calculate_current_reward(0, -1)
             self.movement_decision(0, -1)
         # DOWN
         elif (action == 1):
             #print("DOWN")
             self.calculate_reward(0, 1)
+            self.calculate_current_reward(0, 1)
             self.movement_decision(0, 1)
         # LEFT
         elif (action == 2):
             #print("LEFT")
             self.calculate_reward(-1, 0)
+            self.calculate_current_reward(-1, 0)
             self.movement_decision(-1, 0)
         # RIGHT
         elif (action == 3):
             #print("RIGHT")
             self.calculate_reward(1, 0)
+            self.calculate_current_reward(1, 0)
             self.movement_decision(1, 0)
         # UP/LEFT
         elif (action == 4):
             #print("UP/LEFT")
             self.calculate_reward(-1, -1)
+            self.calculate_current_reward(-1, -1)
             self.movement_decision(-1, -1)
         # UP/RIGHT
         elif (action == 5):
             #print("UP/RIGHT")
             self.calculate_reward(1, -1)
+            self.calculate_current_reward(1, -1)
             self.movement_decision(1, -1)
         # DOWN/LEFT
         elif (action == 6):
             #print("DOWN/LEFT")
             self.calculate_reward(-1, 1)
+            self.calculate_current_reward(-1, 1)
             self.movement_decision(-1, 1)
         # DOWN/RIGHT
         elif (action == 7):
             #print("DOWN/RIGHT")
             self.calculate_reward(1, 1)
+            self.calculate_current_reward(1, 1)
             self.movement_decision(1, 1)
+
+        # Check if all rewards have been found, if yes set done to true
+
+        if(self.no_of_rewards == self.agent_reward):
+            self.done = True
 
         # Crop the submap from the map
         self.sub_map_img = self.map_img_agents[self.agent_x - self.offset:self.agent_x + self.offset + 1, self.agent_y - self.offset:self.agent_y + self.offset + 1, :]
+
+        return self.sub_map_img, self.agent_current_reward, self.done
 
 
